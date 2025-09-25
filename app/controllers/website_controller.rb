@@ -20,6 +20,8 @@ class WebsiteController < ApplicationController
 
   def adotar_povo_filho(adotante)
     povo_filho = Pna.proximo_da_fila
+    return nil unless povo_filho
+    
     adotante.adotar povo_filho
     povo_filho
   end

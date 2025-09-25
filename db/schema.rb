@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2021_03_18_074045) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_25_003631) do
   create_table "adocaos", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "pna_id", null: false
     t.bigint "adotante_id", null: false

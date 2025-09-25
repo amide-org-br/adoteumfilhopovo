@@ -32,7 +32,9 @@ class Pna < ApplicationRecord
 
   def self.proximo_da_fila
     pna = Pna.order(:total_adocoes=>:asc).order(:percent_evangelical=>:asc).order(:population=>:desc).first
-    pna.total_adocoes += 1
+    return nil unless pna
+    
+    pna.total_adocoes += 1 
     pna.save
     pna
   end

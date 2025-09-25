@@ -1,0 +1,8 @@
+// Bootstrap core with configuration
+@use "bootstrap/scss/bootstrap" as * with (
+  $enable-validation-icons: false
+);
+
+// Site theme styles (pull from app/javascript to match production)
+@use "../../javascript/stylesheets/website" as *;
+
