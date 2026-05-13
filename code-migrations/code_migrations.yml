@@ -1,0 +1,27 @@
+# Code Migrations Index
+#
+# This file is the operational source of truth for Code Migrations in this project.
+# Each entry references an intent file under code-migrations/intents/ and tracks
+# its execution state. Do not edit execution metadata by hand — the XP Team
+# workflow appends entries via /run-migrations.
+#
+# Migration intent files use the extension .migration.md and follow the naming
+# convention YYYYMMDDHHMMSS_snake_case_name.migration.md.
+#
+# Execution metadata is written to code-migrations/execution/<id>.yml on
+# completion (see ai/templates/execution.template.yml).
+
+project:
+  name: adoteumfilhopovo
+  description: AMIDE / Adote um Filho Povo — prayer adoption platform for unreached people groups
+  methodology: malvins-xp
+  bootstrapped_at: 2026-05-13
+
+migrations:
+  - id: "20260513000100"
+    name: configure_sendgrid_email_delivery
+    intent_path: code-migrations/intents/20260513000100_configure_sendgrid_email_delivery.migration.md
+    status: pending
+    dependencies: []
+    registered_at: 2026-05-13
+

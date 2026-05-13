@@ -1,0 +1,46 @@
+# Execution record for a Code Migration.
+# One file per migration, written to code-migrations/execution/<id>.yml on
+# completion. Do not edit by hand — the XP Team workflow produces this.
+
+id: "YYYYMMDDHHMMSS"
+name: "snake_case_name"
+intent_path: "code-migrations/intents/YYYYMMDDHHMMSS_snake_case_name.migration.md"
+
+status: "completed"   # one of: pending | in_progress | completed | failed | rolled_back
+checksum: "sha256:..."  # checksum of the intent file at execution time
+dependencies: []
+
+timestamps:
+  started_at: "YYYY-MM-DDTHH:MM:SSZ"
+  completed_at: "YYYY-MM-DDTHH:MM:SSZ"
+
+agents:
+  - xp-pair-navigator
+  - xp-pair-driver
+  - xp-coach-k
+  - xp-refactor-techdebt-hunter
+
+commit:
+  sha: "..."
+  branch: "develop"
+  message: "..."
+
+files:
+  created: []
+  modified: []
+  removed: []
+
+tests:
+  framework: "minitest"
+  command: "bin/rails test"
+  result: "pass"   # pass | fail
+  count:
+    runs: 0
+    assertions: 0
+    failures: 0
+    errors: 0
+    skips: 0
+
+dod:
+  result: "pass"   # pass | fail
+  notes: ""
