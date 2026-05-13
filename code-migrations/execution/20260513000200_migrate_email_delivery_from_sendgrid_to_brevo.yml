@@ -98,17 +98,17 @@ dod:
     existing_tests_pass: false       # 15 pre-existing failures unchanged; no new regressions
     new_feature_has_tests: true
     no_regression: true
-    manually_validated: false        # deferred: requires kamal deploy + live SMTP probe
+    manually_validated: true         # post-deploy live SMTP smoke against Brevo succeeded — see post_deploy_validation below
     no_obvious_tech_debt: true       # Hunter applied 1 refactor, flagged 3 low-severity follow-ups
   intent_specific:
-    emails_send_through_brevo: "deferred-post-deploy"
+    emails_send_through_brevo: true
     no_sendgrid_config_remains: true
     credentials_stored_securely: true
-    production_config_works: "deferred-post-deploy"  # config is correct; "works" depends on Brevo account state
+    production_config_works: true
     local_previews_continue: true
     no_secrets_committed: true
-    tls_works: true                  # enable_starttls_auto: true in production.rb
-    smtp_auth_succeeds: "deferred-post-deploy"
+    tls_works: true                  # enable_starttls_auto: true in production.rb; STARTTLS handshake succeeded in live smoke
+    smtp_auth_succeeds: true
     delivery_failures_visible: true  # raise_delivery_errors = true in production
     env_configs_isolated: true       # development.rb / test.rb untouched, both already correct
     existing_mailers_continue: true  # ApplicationMailer / AdocaoMailer untouched
@@ -152,6 +152,31 @@ follow_ups:
     severity: "low"
     source: "xp-refactor-techdebt-hunter"
     summary: "production.rb sets open_timeout: 10 and read_timeout: 10 on smtp_settings, but docs/EMAIL_DELIVERY.md's 'Production SMTP settings' section omits them. Worth a row in that table next pass."
+
+post_deploy_validation:
+  deployed_at: "2026-05-13T17:42:00Z"
+  deployed_sha: "943079af4c51c9dddccdbc6a79628428b15fad95"   # the seal commit; image tagged with this version on prod
+  command: 'mise exec -- bin/kamal app exec --reuse ''bin/rails runner "puts SmokeMailer.ping.deliver_now.message_id"'''
+  result: "pass"
+  output: "6a04b87c528dd_5f900-4f1@suporte.adoteumfilhopovo.org.br-6060cef334e6.mail"
+  interpretation: |
+    Mail.deliver_now completed without raising an exception, which proves
+    the full SMTP chain succeeded against Brevo: TCP connect, STARTTLS,
+    AUTH PLAIN with credentials.brevo.{login,smtp_key}, DATA, and a 250
+    OK from the server. Compare to the prior SendGrid attempt which
+    raised Net::SMTPAuthenticationError ("Maximum credits exceeded") at
+    the AUTH step.
+
+    The printed ID is Mail's locally generated Message-ID header, not
+    Brevo's queue/transactional ID. Recipient inbox delivery to
+    contato@adoteumfilhopovo.org.br is the only thing not verifiable
+    from this exec; confirmation lives in Brevo's dashboard
+    (Statistics → Transactional) or the destination mailbox.
+
+    Flipping the migration's dod.base.manually_validated and
+    intent_specific.emails_send_through_brevo /
+    production_config_works / smtp_auth_succeeds from "deferred" /
+    false to true.
 
 backlog_from_prior_migrations:
   # Carried forward, not re-flagged here. See execution/20260513000100_…yml for details.
