@@ -57,7 +57,7 @@ Rails.application.configure do
   config.action_mailer.raise_delivery_errors = true
 
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "suporte.adoteumfilhopovo.org.br" }
+  config.action_mailer.default_url_options = { host: "adoteumfilhopovo.org.br" }
 
   # Brevo SMTP delivery via credentials (see bin/rails credentials:edit).
   # Credentials shape: brevo: { smtp_key: "...", login: "...", port: 587, smtp_server: "smtp-relay.brevo.com" }
