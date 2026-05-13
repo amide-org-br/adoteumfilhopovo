@@ -53,21 +53,26 @@ Rails.application.configure do
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.connects_to = { database: { writing: :queue } }
 
-  # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
-  # config.action_mailer.raise_delivery_errors = false
+  # Raise delivery errors so failures appear in logs and do not go unnoticed.
+  config.action_mailer.raise_delivery_errors = true
 
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "suporte.adoteumfilhopovo.org.br" }
 
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # SendGrid SMTP delivery via credentials (see bin/rails credentials:edit).
+  # Credentials shape: sendgrid: { api_key: "SG.xxx" }
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.smtp_settings = {
+    user_name: "apikey",
+    password: Rails.application.credentials.dig(:sendgrid, :api_key),
+    address: "smtp.sendgrid.net",
+    port: 587,
+    domain: "adoteumfilhopovo.org.br",
+    authentication: :plain,
+    enable_starttls_auto: true,
+    open_timeout: 10,
+    read_timeout: 10
+  }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).

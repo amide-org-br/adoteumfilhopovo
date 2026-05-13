@@ -21,7 +21,9 @@ migrations:
   - id: "20260513000100"
     name: configure_sendgrid_email_delivery
     intent_path: code-migrations/intents/20260513000100_configure_sendgrid_email_delivery.migration.md
-    status: pending
+    execution_path: code-migrations/execution/20260513000100_configure_sendgrid_email_delivery.yml
+    status: completed
     dependencies: []
     registered_at: 2026-05-13
+    run_at: "2026-05-13T14:43:41Z"
 

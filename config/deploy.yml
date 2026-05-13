@@ -12,7 +12,9 @@ servers:
 # Enable SSL auto certification via Let's Encrypt via kamal-proxy.
 proxy:
   ssl: true
-  host: suporte.adoteumfilhopovo.org.br
+  hosts:
+    - adoteumfilhopovo.org.br
+    - www.adoteumfilhopovo.org.br
 
 # Credentials for your image host.
 registry:

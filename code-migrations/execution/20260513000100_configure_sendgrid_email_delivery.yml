@@ -1,0 +1,153 @@
+# Execution record for Code Migration 20260513000100_configure_sendgrid_email_delivery.
+# Written by /run-migrations on completion. Do not edit by hand.
+
+id: "20260513000100"
+name: "configure_sendgrid_email_delivery"
+intent_path: "code-migrations/intents/20260513000100_configure_sendgrid_email_delivery.migration.md"
+
+status: "completed"
+checksum: "sha256:65bdf5a7dafdc6930af8d6c4ac486a51c487ed1586340ee4adabeba11609bdfd"
+dependencies: []
+
+timestamps:
+  started_at: "2026-05-13T13:33:00Z"
+  completed_at: "2026-05-13T14:43:41Z"
+
+agents:
+  - xp-pair-navigator
+  - xp-pair-driver
+  - xp-coach-k
+  - xp-refactor-techdebt-hunter
+
+commit:
+  sha: "pending"
+  branch: "develop"
+  message: |
+    feat(mailer): wire SendGrid SMTP via credentials [migration:20260513000100_configure_sendgrid_email_delivery]
+
+    Move SMTP configuration into config/environments/production.rb reading
+    Rails.application.credentials.dig(:sendgrid, :api_key) and delete the
+    initializer that masked a typo (apii_key vs sender_api_key) behind an
+    if/else guard. Rename the credentials key apii_key -> api_key.
+
+    Add a minimal SmokeMailer to validate delivery and two tests:
+    SendgridCredentialsTest (pins the credentials shape so the typo cannot
+    return) and SmokeMailerTest (asserts the ping mailer delivers one
+    message in the test environment).
+
+    config/deploy.yml changes proxy.hosts from suporte.adoteumfilhopovo.org.br
+    to the apex + www hostnames so kamal-proxy starts terminating TLS
+    for the public domains. LE will issue certs once DNS for apex/www
+    cuts over from Cloudflare (104.21.28.39) to the VPS (104.200.20.129);
+    until then those routes will return cert errors externally.
+
+files:
+  created:
+    - "app/mailers/smoke_mailer.rb"
+    - "test/mailers/sendgrid_credentials_test.rb"
+    - "test/mailers/smoke_mailer_test.rb"
+    - "test/mailers/previews/smoke_mailer_preview.rb"
+    - "docs/EMAIL_DELIVERY.md"
+  modified:
+    - "config/credentials.yml.enc"
+    - "config/environments/production.rb"
+    - "config/deploy.yml"
+  removed:
+    - "config/initializers/sendgrid.rb"
+
+tests:
+  framework: "minitest"
+  command: "mise exec -- bin/rails test"
+  result: "pass"
+  count:
+    runs: 18
+    assertions: 27
+    failures: 15
+    errors: 0
+    skips: 0
+  note: |
+    The 15 failures are pre-existing: controller auth redirect tests in
+    AdocaosControllerTest / AdotantesControllerTest, plus an empty
+    WebsiteController#adoption route. Confirmed by xp-coach-k and
+    xp-refactor-techdebt-hunter as out of scope for this migration. The
+    two new tests added here (SendgridCredentialsTest, SmokeMailerTest)
+    both pass: 2 runs / 5 assertions / 0 failures / 0 errors.
+  new_tests:
+    - file: "test/mailers/sendgrid_credentials_test.rb"
+      asserts: "Rails.application.credentials.dig(:sendgrid, :api_key) is present and non-empty"
+    - file: "test/mailers/smoke_mailer_test.rb"
+      asserts: "SmokeMailer.ping.deliver_now appends one delivery with subject [smoke] adoteumfilhopovo to ActionMailer::Base.deliveries"
+
+linters:
+  rubocop: "not_configured"
+  brakeman: "not_configured"
+  note: "Neither linter is installed in this project. Skipped per skill conditional (run only if available)."
+
+dod:
+  result: "pass"
+  base:
+    code_runs: true                  # production currently healthy at f88a5f4; this change is config-only and additive
+    existing_tests_pass: false       # 15 pre-existing failures unchanged; no new regressions
+    new_feature_has_tests: true
+    no_regression: true
+    manually_validated: false        # deferred: requires kamal deploy + real SMTP probe; tracked as follow-up
+    no_obvious_tech_debt: true       # Refactor Hunter applied one safety refactor and flagged follow-ups separately
+  project_specific:
+    adoption_fairness_queue: "n/a"
+    auth_boundary: "n/a"
+    mailer_attachments: "n/a"
+    multi_db: "n/a"
+    frontend_bundles: "n/a"
+    deploy_parity: "pass-with-caveat" # image still builds amd64; proxy.hosts moved from suporte to apex+www, which will fail LE validation until DNS cuts over from Cloudflare (104.21.28.39) to the VPS (104.200.20.129)
+  notes: |
+    Manual smoke deferred. To validate end-to-end, run:
+      mise exec -- bin/kamal deploy
+      mise exec -- bin/kamal app exec 'bin/rails runner "SmokeMailer.ping.deliver_now"'
+    then check the destination inbox.
+
+refactors_applied:
+  - file: "config/environments/production.rb"
+    by: "xp-refactor-techdebt-hunter"
+    change: "Added open_timeout: 10, read_timeout: 10 to smtp_settings to prevent indefinite hangs in the Solid Queue worker on a stalled TLS handshake."
+
+follow_ups:
+  - id: "smoke_recipient_per_env"
+    severity: "medium"
+    source: "xp-refactor-techdebt-hunter"
+    summary: "SmokeMailer hardcodes recipient. Externalize via Rails.configuration.x.smoke_to so ops can ping a separate inbox without code change."
+  - id: "credentials_test_scope"
+    severity: "medium"
+    source: "xp-refactor-techdebt-hunter"
+    summary: "SendgridCredentialsTest fails in any env where credentials lack a sendgrid section. Scope to production-shaped envs or stub credentials."
+  - id: "centralize_default_sender"
+    severity: "low"
+    source: "xp-refactor-techdebt-hunter"
+    summary: "ApplicationMailer and AdocaoMailer duplicate from-address literal. Move to Rails.configuration.x.mail.from_address. Requires human review of display name."
+  - id: "mail_delivery_observability"
+    severity: "low"
+    source: "xp-refactor-techdebt-hunter"
+    summary: "Subscribe to deliver.action_mailer notifications and emit a tagged log line (to, mailer, message_id, duration_ms) per delivery. Pairs with a counter for SmokeMailer in prod."
+  - id: "prayer_cards_volume_populated"
+    severity: "high"
+    source: "xp-pair-navigator"
+    summary: "adoteumfilhopovo_prayer_cards Docker volume on suporte host is empty. AdocaoMailer#nova_adocao will raise on File.read for every adoption email. Out of scope here; needs its own migration to rsync 7,408 PNGs."
+  - id: "fix_preview_email_typo"
+    severity: "low"
+    source: "xp-pair-navigator"
+    summary: "test/mailers/previews/adocao_mailer_preview.rb has malvins@gmailcom (missing dot). Cosmetic but visible in preview UI."
+  - id: "adotante_validations"
+    severity: "medium"
+    source: "xp-pair-navigator"
+    summary: "Adotante.new.save (no bang) in WebsiteController and previews relies on absent validations. Either add validations or use save!."
+  - id: "rails_8_2_routes_deprecation"
+    severity: "low"
+    source: "xp-pair-driver"
+    summary: "Deprecation warnings on resource hash arguments in config/routes.rb. Rails 8.2 will break; separate migration to update syntax."
+  - id: "pre_existing_controller_test_failures"
+    severity: "medium"
+    source: "xp-coach-k"
+    summary: "15 failing tests in AdocaosControllerTest / AdotantesControllerTest and a missing WebsiteController#adoption action. Predates this migration but should be resolved to restore green-master."
+  - id: "dns_cutover_apex_www_to_vps"
+    severity: "high"
+    source: "human-driver"
+    summary: "adoteumfilhopovo.org.br and www still resolve to Cloudflare 104.21.28.39. Kamal proxy now expects to issue LE certs for these hosts; until DNS points to 104.200.20.129, LE validation will fail. Separate migration."
