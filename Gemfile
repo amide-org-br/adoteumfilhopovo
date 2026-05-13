@@ -1,13 +1,18 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '3.2.3'
+ruby '3.4.9'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem "rails", "~> 8.0.3"
+gem "rails", "~> 8.1.0"
 
-# Use mysql as the database for Active Record
-gem 'mysql2'
+# Use SQLite as the database for Active Record
+gem "sqlite3", ">= 2.1"
+
+# Solid adapters for cache, queue, and cable (SQLite-backed)
+gem "solid_queue"
+gem "solid_cache"
+gem "solid_cable"
 # Use Puma as the app server
 gem 'puma'
 # Use SCSS for stylesheets
@@ -29,6 +34,9 @@ gem 'devise'
 
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', require: false
+
+gem "kamal", require: false
+gem "thruster", require: false
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
@@ -61,6 +69,7 @@ end
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 
 gem 'psych'
+gem "csv"
 
 gem "jsbundling-rails", "~> 1.3"
 gem "cssbundling-rails", "~> 1.4"
