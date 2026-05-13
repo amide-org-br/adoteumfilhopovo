@@ -20,7 +20,7 @@ agents:
   - xp-refactor-techdebt-hunter
 
 commit:
-  sha: "pending"
+  sha: "a01b30f4e6ac245c8caf8d2cddbbf1d4af850038"
   branch: "develop"
   message: |
     feat(mailer): wire SendGrid SMTP via credentials [migration:20260513000100_configure_sendgrid_email_delivery]
