@@ -59,19 +59,19 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "suporte.adoteumfilhopovo.org.br" }
 
-  # SendGrid SMTP delivery via credentials (see bin/rails credentials:edit).
-  # Credentials shape: sendgrid: { api_key: "SG.xxx" }
+  # Brevo SMTP delivery via credentials (see bin/rails credentials:edit).
+  # Credentials shape: brevo: { smtp_key: "...", login: "...", port: 587, smtp_server: "smtp-relay.brevo.com" }
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
-    user_name: "apikey",
-    password: Rails.application.credentials.dig(:sendgrid, :api_key),
-    address: "smtp.sendgrid.net",
-    port: 587,
-    domain: "adoteumfilhopovo.org.br",
-    authentication: :plain,
+    address:              credentials.dig(:brevo, :smtp_server),
+    port:                 credentials.dig(:brevo, :port),
+    user_name:            credentials.dig(:brevo, :login),
+    password:             credentials.dig(:brevo, :smtp_key),
+    authentication:       :plain,
     enable_starttls_auto: true,
-    open_timeout: 10,
-    read_timeout: 10
+    domain:               "adoteumfilhopovo.org.br",
+    open_timeout:         10,
+    read_timeout:         10,
   }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to

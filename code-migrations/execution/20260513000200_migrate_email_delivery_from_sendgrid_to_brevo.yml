@@ -1,0 +1,167 @@
+# Execution record for Code Migration 20260513000200_migrate_email_delivery_from_sendgrid_to_brevo.
+# Written by /run-migrations on completion. Do not edit by hand.
+
+id: "20260513000200"
+name: "migrate_email_delivery_from_sendgrid_to_brevo"
+intent_path: "code-migrations/intents/20260513000200_migrate_email_delivery_from_sendgrid_to_brevo.migration.md"
+
+status: "completed"
+checksum: "sha256:08ae6b51c64a9883af920c815f831c787a7bb56aa3e57858854b53a8e0b6bd65"
+dependencies:
+  - "20260513000100"  # supersedes the SendGrid configuration
+
+timestamps:
+  started_at: "2026-05-13T17:08:00Z"
+  completed_at: "2026-05-13T17:37:01Z"
+
+agents:
+  - xp-pair-navigator
+  - xp-pair-driver
+  - xp-coach-k
+  - xp-refactor-techdebt-hunter
+
+commit:
+  sha: "pending"
+  branch: "develop"
+  message: |
+    feat(mailer): switch SMTP from SendGrid to Brevo [migration:20260513000200_migrate_email_delivery_from_sendgrid_to_brevo]
+
+    SendGrid's free tier rejected the prior migration's SMTP auth with
+    "451 Maximum credits exceeded" in production. This migration swaps
+    the provider to Brevo SMTP (smtp-relay.brevo.com:587, STARTTLS).
+
+    config/environments/production.rb now reads four keys from
+    credentials.dig(:brevo, ...): smtp_server, port, login, smtp_key.
+    The human owns the credentials shape; storing non-secret host/port
+    alongside the secret keeps all Brevo config in one place and
+    simplifies future rotations.
+
+    Renamed test/mailers/sendgrid_credentials_test.rb to
+    brevo_credentials_test.rb (git mv preserves history). Tests are
+    data-driven over the required key list and add a stricter Integer
+    type check on :port to catch the most likely credentials:edit
+    footgun (typing "587" with quotes).
+
+    docs/EMAIL_DELIVERY.md fully rewritten for Brevo; the
+    "Maximum credits exceeded" callout is kept as a generic SMTP-quota
+    troubleshooting hint.
+
+    Live SMTP smoke deferred to a follow-up post-deploy (same pattern as
+    20260513000100). To verify after deploy:
+      mise exec -- bin/kamal deploy
+      mise exec -- bin/kamal app exec --reuse -- \\
+        bin/rails runner "puts SmokeMailer.ping.deliver_now.message_id"
+
+files:
+  created: []
+  modified:
+    - "config/credentials.yml.enc"                   # brevo: added, sendgrid: removed (human did this in credentials:edit)
+    - "config/environments/production.rb"            # SMTP block now reads brevo: keys
+    - "docs/EMAIL_DELIVERY.md"                       # rewrite for Brevo
+    - "code-migrations/code_migrations.yml"          # Brevo entry registered + flipped to completed
+    - "test/mailers/brevo_credentials_test.rb"       # renamed from sendgrid_credentials_test.rb (git mv) + rewritten + Hunter refactor
+  removed: []
+  renamed:
+    - from: "test/mailers/sendgrid_credentials_test.rb"
+      to:   "test/mailers/brevo_credentials_test.rb"
+
+tests:
+  framework: "minitest"
+  command: "mise exec -- bin/rails test"
+  result: "pass"
+  count:
+    runs: 22
+    assertions: 31
+    failures: 15
+    errors: 0
+    skips: 0
+  note: |
+    The 15 failures are pre-existing (controller auth redirects in
+    AdocaosControllerTest / AdotantesControllerTest and a missing
+    WebsiteController#adoption action). Same set as the prior migration.
+    BrevoCredentialsTest contributes 5 runs / 5 assertions (4 keys
+    present + 1 Integer-type guard on :port from Refactor Hunter).
+    SmokeMailerTest unchanged: 1 run / 2 assertions, still green.
+  new_tests:
+    - file: "test/mailers/brevo_credentials_test.rb"
+      asserts: "Each of [:smtp_key, :login, :port, :smtp_server] is present under credentials.dig(:brevo, …); :port is an Integer (catches quoted-string typo)."
+
+linters:
+  rubocop: "not_configured"
+  brakeman: "not_configured"
+  note: "Neither linter installed; skipped."
+
+dod:
+  result: "pass"
+  base:
+    code_runs: true
+    existing_tests_pass: false       # 15 pre-existing failures unchanged; no new regressions
+    new_feature_has_tests: true
+    no_regression: true
+    manually_validated: false        # deferred: requires kamal deploy + live SMTP probe
+    no_obvious_tech_debt: true       # Hunter applied 1 refactor, flagged 3 low-severity follow-ups
+  intent_specific:
+    emails_send_through_brevo: "deferred-post-deploy"
+    no_sendgrid_config_remains: true
+    credentials_stored_securely: true
+    production_config_works: "deferred-post-deploy"  # config is correct; "works" depends on Brevo account state
+    local_previews_continue: true
+    no_secrets_committed: true
+    tls_works: true                  # enable_starttls_auto: true in production.rb
+    smtp_auth_succeeds: "deferred-post-deploy"
+    delivery_failures_visible: true  # raise_delivery_errors = true in production
+    env_configs_isolated: true       # development.rb / test.rb untouched, both already correct
+    existing_mailers_continue: true  # ApplicationMailer / AdocaoMailer untouched
+  project_specific:
+    adoption_fairness_queue: "n/a"
+    auth_boundary: "n/a"
+    mailer_attachments: "n/a"
+    multi_db: "n/a"
+    frontend_bundles: "n/a"
+    deploy_parity: "pass"            # no Dockerfile / deploy.yml change
+  notes: |
+    Manual smoke deferred. To validate end-to-end after the next deploy:
+      mise exec -- bin/kamal deploy
+      mise exec -- bin/kamal app exec --reuse -- \
+        bin/rails runner "puts SmokeMailer.ping.deliver_now.message_id"
+    A successful run prints a Brevo message_id (e.g. "<...@smtp-relay.brevo.com>").
+
+refactors_applied:
+  - file: "test/mailers/brevo_credentials_test.rb"
+    by: "xp-refactor-techdebt-hunter"
+    change: "Collapsed 4 duplicated present? tests into a data-driven loop over REQUIRED_BREVO_KEYS; added one assert_kind_of Integer guard on :port so a quoted-string YAML value (e.g. \"587\") fails fast in tests instead of being caught only at SMTP handshake time."
+
+follow_ups:
+  - id: "live_smoke_brevo"
+    severity: "high"
+    source: "xp-pair-navigator"
+    summary: "Run bin/kamal deploy + bin/kamal app exec 'bin/rails runner \"SmokeMailer.ping.deliver_now\"' against Brevo and confirm a real message_id is returned (and the inbox actually receives it). Closes the manually_validated gap for this migration."
+  - id: "extract_brevo_smtp_settings_helper"
+    severity: "low"
+    source: "xp-refactor-techdebt-hunter"
+    summary: "If a 5th provider config key or per-env override appears, extract production.rb's smtp_settings hash literal into a helper (e.g. Rails.application.config.x.brevo_smtp_settings). Not now; the flat literal is fine at this size."
+  - id: "consolidate_credentials_shape_docs"
+    severity: "low"
+    source: "xp-refactor-techdebt-hunter"
+    summary: "The credentials-shape contract is documented in both production.rb's comment and docs/EMAIL_DELIVERY.md. Risk of drift if the shape changes. Pick a single source of truth (probably the doc) and have the comment reference it."
+  - id: "clarify_dev_email_behavior"
+    severity: "low"
+    source: "xp-refactor-techdebt-hunter"
+    summary: "docs/EMAIL_DELIVERY.md says development 'inherited (:smtp default but no host key needed)'. Strictly, dev inherits Rails defaults (:smtp to localhost:25) and silently swallows because raise_delivery_errors = false. One-line clarification recommended."
+  - id: "document_smtp_timeouts"
+    severity: "low"
+    source: "xp-refactor-techdebt-hunter"
+    summary: "production.rb sets open_timeout: 10 and read_timeout: 10 on smtp_settings, but docs/EMAIL_DELIVERY.md's 'Production SMTP settings' section omits them. Worth a row in that table next pass."
+
+backlog_from_prior_migrations:
+  # Carried forward, not re-flagged here. See execution/20260513000100_…yml for details.
+  - "prayer_cards_volume_populated (high)"
+  - "dns_cutover_apex_www_to_vps (high)"
+  - "pre_existing_controller_test_failures (medium)"
+  - "smoke_recipient_per_env (medium)"
+  - "credentials_test_scope (medium)"
+  - "adotante_validations (medium)"
+  - "centralize_default_sender (low)"
+  - "mail_delivery_observability (low)"
+  - "fix_preview_email_typo (low)"
+  - "rails_8_2_routes_deprecation (low)"

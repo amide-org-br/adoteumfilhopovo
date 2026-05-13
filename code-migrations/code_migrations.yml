@@ -27,3 +27,13 @@ migrations:
     registered_at: 2026-05-13
     run_at: "2026-05-13T14:43:41Z"
 
+  - id: "20260513000200"
+    name: migrate_email_delivery_from_sendgrid_to_brevo
+    intent_path: code-migrations/intents/20260513000200_migrate_email_delivery_from_sendgrid_to_brevo.migration.md
+    execution_path: code-migrations/execution/20260513000200_migrate_email_delivery_from_sendgrid_to_brevo.yml
+    status: completed
+    dependencies:
+      - "20260513000100"
+    registered_at: 2026-05-13
+    run_at: "2026-05-13T17:37:01Z"
+
