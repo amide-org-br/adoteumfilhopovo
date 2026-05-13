@@ -1,0 +1,49 @@
+# Name of your application. Used to uniquely configure containers.
+service: adoteumfilhopovo
+
+# Name of the container image.
+image: malvins/adoteumfilhopovo
+
+# Deploy to these servers.
+servers:
+  web:
+    - suporte.adoteumfilhopovo.org.br
+
+# Enable SSL auto certification via Let's Encrypt via kamal-proxy.
+proxy:
+  ssl: true
+  host: suporte.adoteumfilhopovo.org.br
+
+# Credentials for your image host.
+registry:
+  server: docker.io
+  username: malvins
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+# Configure builder for production (linux/amd64 for the VPS).
+builder:
+  arch: amd64
+
+# SSH user on the target host (has Docker access and sudo).
+ssh:
+  user: deployer
+  port: 77
+
+# Persistent volumes:
+#   adoteumfilhopovo_storage      → holds all four SQLite DBs + ActiveStorage uploads
+#   adoteumfilhopovo_prayer_cards → holds the 7,408 prayer-card PNGs
+#     (rsync those manually from ../generated_prayer_cards/ to the host volume path)
+volumes:
+  - "adoteumfilhopovo_storage:/rails/storage"
+  - "adoteumfilhopovo_prayer_cards:/rails/app/assets/images/prayer_cards"
+
+# Environment variables injected into containers.
+env:
+  secret:
+    - RAILS_MASTER_KEY
+  clear:
+    SOLID_QUEUE_IN_PUMA: "true"
+    WEB_CONCURRENCY: "2"
+
+# No accessories — Redis and separate DB are replaced by the Solid stack on SQLite.
