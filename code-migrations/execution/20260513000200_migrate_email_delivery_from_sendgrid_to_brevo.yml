@@ -21,7 +21,7 @@ agents:
   - xp-refactor-techdebt-hunter
 
 commit:
-  sha: "pending"
+  sha: "a65cfbdad3df33a316b06af157857b2e765f910c"
   branch: "develop"
   message: |
     feat(mailer): switch SMTP from SendGrid to Brevo [migration:20260513000200_migrate_email_delivery_from_sendgrid_to_brevo]
