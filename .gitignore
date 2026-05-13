@@ -84,4 +84,7 @@ app/assets/images/prayer_cards/
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
-.DS_Store
+.claude
+.claude
+prayer_cards/
+prayer_cards
